@@ -3,6 +3,8 @@
   <meta charset="utf-8">
   <title>Markdown Tex</title>
   <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 
 <!-- css -->
@@ -13,6 +15,7 @@
   }
   html, body {
     height: 100%;
+    font-family: Roboto;
   }
   #root {
     height: 100%;
@@ -32,12 +35,59 @@
     overflow-y: auto;
     padding: 10px;
   }
+  #settings-button {
+    position: absolute;
+    top: 6px; right: 6px;
+    cursor: pointer;
+  }
+  #settings {
+    position: absolute;
+    background: #f8f8f8;
+    width: 35%; min-width: 350px;
+    top: 35%; left: 50%; transform: translate(-50%, -50%);
+    padding: 14px;
+    z-index: 6;  /* codemirror use z-Index 5 */
+    border-radius: 4px;
+    box-shadow: 0 2px 1px 0px #eee;
+    display: flex;
+    flex-direction: column;
+  }
+  #settings[hidden] {
+    display: none;
+  }
+  #settings > #menu {
+    font-size: 22px;
+    font-weight: 300;
+    margin: 0 10px 6px 10px;
+  }
+  #settings > ul > li {
+    margin-bottom: 6px;
+  }
+  #settings > ul > li > span {
+    color: #44e;
+    text-decoration: underline;
+    cursor: pointer;
+  }
 </style>
 
 <!-- DOM -->
 <div id="root">
   <div id="input"></div>
   <div id="output" class="markdown-body"></div>
+  <div id="settings-button" onclick="var s = document.querySelector('#settings'); s.hidden = !s.hidden">
+    <i class="material-icons">settings</i>
+  </div>
+  <div id="settings" hidden>
+    <div id="menu">Menu</div>
+    <ul>
+      <li id="current-gist"><span>Current Gist</span></li>
+      <li id="open-new-gist"><span>Open New Gist</span></li>
+      <li id="setup-access-token">
+        <span>Setup Access Token</span> or
+        <a target='_blank' href="https://github.com/settings/tokens/new?scopes=gist&description=Markdown%20Tex">Create</a>
+      </li>
+    </ul>
+  </div>
 </div>
 
 <!-- lib: lodash -->
@@ -146,8 +196,9 @@
   //
   // Use Gist as data storage
   //
-  var kGistUrl = 'https://api.github.com/gists';
   var kUrlQuery = _.fromPairs(window.location.search.substr(1).split('&').map(e => e.split('=')));
+  var { id : kId, filename : kFilename } = kUrlQuery;
+  var kToken = window.localStorage.getItem('token');
 
   var fetchToJson = (resp) => {
     if (!resp.ok) { throw resp.statusText; }
@@ -174,23 +225,44 @@
       })
     }).then(fetchToJson);
 
-  if (['id', 'filename'].every(e => e in kUrlQuery)) {
-    const { id, token, filename } = kUrlQuery;
-
+  if (kId && kFilename) {
     // Load
-    gistGet(id, token, filename).then(
+    gistGet(kId, kToken, kFilename).then(
       (content) => kEditor.setValue(content), window.alert);
 
     // Update on Control-s (if token is valid)
     document.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.key == 's') {
         event.preventDefault();
-        if (!token) {
-          window.alert('Token must be provided to save data');
+        if (!kToken) {
+          window.alert('Access token must be provided to save data');
           return;
         }
-        gistUpdate(id, token, filename, kEditor.getValue()).catch(window.alert);
+        gistUpdate(kId, kToken, kFilename, kEditor.getValue()).catch(window.alert);
       }
     });
   }
+
+  document.querySelector('#current-gist > span').addEventListener('click', (event) => {
+    const url = `https://gist.github.com/${kId}`;
+    window.open(url, '_blank');
+  });
+
+  document.querySelector('#open-new-gist > span').addEventListener('click', (event) => {
+    const example = `${kId || '<gist-id>'}/${kFilename || '<filename>'}`;
+    const input = window.prompt('Input Gist ID and Filename', example);
+    if (input) {
+      const [id, filename] = input.split('/');
+      const { origin, pathname } = window.location;
+      window.location = `${origin}${pathname}?id=${id}&filename=${filename}`;
+    }
+  });
+
+  document.querySelector('#setup-access-token > span').addEventListener('click', (event) => {
+    const token = window.prompt('Input your access token');
+    if (token) {
+      window.localStorage.setItem('token', token);
+      window.location.reload();
+    }
+  });
 </script>
