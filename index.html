@@ -102,9 +102,9 @@
     //
     // NOTE:
     // - For nested usage of "$" (e.g. $x = y \text{where $y = 1$} $), the inner one has to be replaced with "\( .. \)"
+    // - Showdown treats "$" as "¨D"
     //
     {
-      // NOTE: Showdown treats "$" as "¨D"
       type: 'lang',
       regex: /(^|\s)¨D((?:(?!¨D)(?:.|\n))+)¨D($|\s)/gm, // find $ ... $
       replace: (...args) => {
