@@ -1,10 +1,17 @@
+## Markdown-Tex
+
+Simple demo of Markdown editor with TeX integration.
+Currently, Gist is used as backend accessed via Github API Token.
+
+Demo
+
+https://rawcdn.githack.com/hi-ogawa/markdown-tex/7d943f5d11dc728459e041160e5e697827882f05/index.html?id=250f2363b93b83aec636bba353f183d4&filename=markdown-tex-demo.txt
+
 TODO
 
-- UI to choose gist's id/token/filename
-- Deployment
-- Support macros
+- Support more convinient macro setup
 
-References
+## References
 
 - https://katex.org/docs/browser.html
 - https://codemirror.net/doc/manual.html
