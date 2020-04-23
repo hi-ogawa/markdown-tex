@@ -153,12 +153,14 @@
     if (!resp.ok) { throw resp.statusText; }
     return resp.json();
   }
+
   var gistGet = (id, token, filename) =>
     fetch('https://api.github.com/gists/' + id, {
-      headers: { Authorization: `token ${token}` }
+      // if public, request will succeed without token
+      headers: { Authorization: token ? `token ${token}` : null }
     }).then(fetchToJson).then((respJson) => {
       if (!(filename in respJson.files)) {
-        throw `Gist (${filename}) not found.`;
+        throw `Gist not found : filename = ${filename}`;
       }
       return respJson.files[filename].content;
     });
@@ -172,17 +174,21 @@
       })
     }).then(fetchToJson);
 
-  if (['id', 'token', 'filename'].every(e => e in kUrlQuery)) {
+  if (['id', 'filename'].every(e => e in kUrlQuery)) {
     const { id, token, filename } = kUrlQuery;
 
     // Load
     gistGet(id, token, filename).then(
       (content) => kEditor.setValue(content), window.alert);
 
-    // Update on Control-s
+    // Update on Control-s (if token is valid)
     document.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.key == 's') {
         event.preventDefault();
+        if (!token) {
+          window.alert('Token must be provided to save data');
+          return;
+        }
         gistUpdate(id, token, filename, kEditor.getValue()).catch(window.alert);
       }
     });
