@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Markdown Tex</title>
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+</head>
 
 <!-- css -->
 <style>
@@ -32,7 +37,7 @@
 <!-- DOM -->
 <div id="root">
   <div id="input"></div>
-  <div id="output"></div>
+  <div id="output" class="markdown-body"></div>
 </div>
 
 <!-- lib: lodash -->
@@ -40,6 +45,9 @@
 
 <!-- lib: showdown -->
 <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
+
+<!-- lib: https://github.com/sindresorhus/github-markdown-css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
 
 <!-- lib: codemirror -->
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.js"></script>
