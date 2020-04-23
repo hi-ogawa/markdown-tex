@@ -1,7 +1,7 @@
 ## Markdown-Tex
 
-Simple demo of Markdown editor with TeX integration.
-Currently, Gist is used as backend accessed via Github API Token.
+This is a simple demo of markdown editor with TeX integration.
+Gist is used as a text data backend, accessed via user-provided Github API token.
 
 Demo
 

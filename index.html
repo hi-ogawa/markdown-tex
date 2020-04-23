@@ -102,6 +102,7 @@
 <!-- lib: codemirror -->
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/addon/mode/multiplex.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/addon/comment/comment.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/mode/markdown/markdown.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/mode/stex/stex.js"></script>
 <script src="./codemirror-ipythongfm.js"></script>
@@ -136,6 +137,9 @@
       // Spaces for Tab (cf. https://github.com/codemirror/CodeMirror/issues/988)
       "Tab": (cm) => cm.execCommand("indentMore"),
       "Shift-Tab": (cm) => cm.execCommand("indentLess"),
+
+      // Comment addon
+      "Ctrl-/": (cm) => cm.toggleComment(),
     }
   };
   var kKatexCache = {};
