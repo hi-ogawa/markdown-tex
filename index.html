@@ -39,15 +39,18 @@
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
 
 <!-- lib: showdown -->
-<script src="https://cdn.jsdelivr.net/npm/showdown@latest/dist/showdown.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
 
 <!-- lib: codemirror -->
-<script src="https://cdn.jsdelivr.net/npm/codemirror@latest/lib/codemirror.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@latest/lib/codemirror.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/addon/mode/multiplex.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/mode/markdown/markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/mode/stex/stex.js"></script>
+<script src="./codemirror-ipythongfm.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.css">
 
 <!-- lib: katex -->
 <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
 
 <!-- main script -->
@@ -59,6 +62,7 @@
     throwOnError: false,
   };
   var kCodemirrorOptions = {
+    mode: 'ipythongfm',
     tabSize: 2,
     indentWithTabs: false,
     lineNumbers: true,
@@ -130,4 +134,49 @@
   kEditor.doc.on('change', () => {
     throttledPreview(kEditor.getValue());
   });
+
+  //
+  // Use Gist as data storage
+  //
+  var kGistUrl = 'https://api.github.com/gists';
+  var kUrlQuery = _.fromPairs(window.location.search.substr(1).split('&').map(e => e.split('=')));
+
+  var fetchToJson = (resp) => {
+    if (!resp.ok) { throw resp.statusText; }
+    return resp.json();
+  }
+  var gistGet = (id, token, filename) =>
+    fetch('https://api.github.com/gists/' + id, {
+      headers: { Authorization: `token ${token}` }
+    }).then(fetchToJson).then((respJson) => {
+      if (!(filename in respJson.files)) {
+        throw `Gist (${filename}) not found.`;
+      }
+      return respJson.files[filename].content;
+    });
+
+  var gistUpdate = (id, token, filename, content) =>
+    fetch('https://api.github.com/gists/' + id, {
+      method: 'PATCH',
+      headers: { Authorization: `token ${token}` },
+      body: JSON.stringify({
+        files: { [filename]: { content } }
+      })
+    }).then(fetchToJson);
+
+  if (['id', 'token', 'filename'].every(e => e in kUrlQuery)) {
+    const { id, token, filename } = kUrlQuery;
+
+    // Load
+    gistGet(id, token, filename).then(
+      (content) => kEditor.setValue(content), window.alert);
+
+    // Update on Control-s
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.key == 's') {
+        event.preventDefault();
+        gistUpdate(id, token, filename, kEditor.getValue()).catch(window.alert);
+      }
+    });
+  }
 </script>
