@@ -5,11 +5,11 @@ Gist is used as a text data backend, accessed via user-provided Github API token
 
 Demo
 
-https://rawcdn.githack.com/hi-ogawa/markdown-tex/7d943f5d11dc728459e041160e5e697827882f05/index.html?id=250f2363b93b83aec636bba353f183d4&filename=markdown-tex-demo.txt
+https://hi-ogawa.github.io/markdown-tex/?id=250f2363b93b83aec636bba353f183d4&filename=markdown-tex-demo.txt
 
 TODO
 
-- Support more convinient macro setup
+- Support more convenient macro setup
 
 ## References
 
