@@ -1,9 +1,11 @@
 var kInput = document.querySelector('#input')
 var kOutput = document.querySelector('#output');
+
 var kKatexOptions = {
   output: 'html',
   throwOnError: false,
 };
+
 var kCodemirrorOptions = {
   mode: 'ipythongfm',
   tabSize: 2,
@@ -26,7 +28,12 @@ var kCodemirrorOptions = {
     "Ctrl-/": (cm) => cm.toggleComment(),
   }
 };
-var kConverter = new window.showdown.Converter();
+
+var kShowdownOptions = {
+  literalMidWordUnderscores: true, // this saves inline math with underscore
+};
+
+var kConverter = new window.showdown.Converter(kShowdownOptions);
 var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 
 const kPatterns = [
