@@ -142,56 +142,39 @@
       "Ctrl-/": (cm) => cm.toggleComment(),
     }
   };
-  var kKatexCache = {};
 
-  // Render math as Showdown extension
-  showdown.extension('katex', () => [
-    //
-    // Strategy is
-    //   - first 'lang' pass we wrap $...$ by custom script tag, so that Showdown ignores it internally.
-    //   - second 'output' pass we render math via Katex.
-    //
-    // We don't render at 'lang' pass because katex's output dom string is quite complicated and
-    // it seems that this increases what Showdown has to process internally.
-    //
-    // NOTE:
-    // - For nested usage of "$" (e.g. $x = y \text{where $y = 1$} $), the inner one has to be replaced with "\( .. \)"
-    // - Showdown treats "$" as "¨D"
-    //
+  const kReplacers = [
     {
-      type: 'lang',
-      regex: /(^|\s)¨D((?:(?!¨D)(?:.|\n))+)¨D($|\s)/gm, // find $ ... $
-      replace: (...args) => {
-        var [orig, m1, m2, m3] = args;
-        return `${m1}<script type="math/tex; mode=inline">${m2}<\/script>${m3}`;
+      regex: /\$\$([^\$]+?)\$\$/gm,
+      replace: (_, p1) => {
+        return `<script type="math/tex; mode=display">${p1}<\/script>`;
       }
     },
     {
-      type: 'lang',
-      regex: /(^|\s)¨D¨D((?:(?!¨D)(?:.|\n))+)¨D¨D($|\s)/gm, // find $$ ... $$
-      replace: (...args) => {
-        var [orig, m1, m2, m3] = args;
-        return `${m1}<script type="math/tex; mode=display">${m2}<\/script>${m3}`;
+      regex: /\$([^\$]+?)\$/gm,
+      replace: (_, p1) => {
+        return `<script type="math/tex; mode=inline">${p1}<\/script>`;
       }
     },
     {
-      type: 'output',
       regex: /<script type="math\/tex; mode=(.*?)">((?:.|\n)*?)<\/script>/gm,
-      replace: (...args) => {
-        var mode = args[1];
-        var input = args[2];
-        var key = `${input}@mode=${mode}`;
-        if (!(key in kKatexCache)) {
-          kKatexCache[key] = katex.renderToString(input, { displayMode: mode == 'display', ...kKatexOptions });
-        }
-        return kKatexCache[key];
+      replace: (_, p1, p2) => {
+        return katex.renderToString(p2, { displayMode: p1 == 'display', ...kKatexOptions });
       }
-    },
-  ]);
-  var kConverter = new window.showdown.Converter({ extensions: ['katex'] });
+    }
+  ];
+  var kConverter = new window.showdown.Converter();
   var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 
-  var preview = (src) => kOutput.innerHTML = kConverter.makeHtml(src);
+  var preview = (src) => {
+    // NOTE: Before running Showdown, we only wrap tex code with simple script tag so that
+    //       Showdown doesn't have to see complicated katex's dom output, which seems affect performance.
+    src = src.replace(kReplacers[0].regex, kReplacers[0].replace);
+    src = src.replace(kReplacers[1].regex, kReplacers[1].replace);
+    src = kConverter.makeHtml(src);
+    src = src.replace(kReplacers[2].regex, kReplacers[2].replace);
+    kOutput.innerHTML = src;
+  }
   var throttledPreview = _.throttle(preview, 200, { leading: false, trailing : true });
   kEditor.doc.on('change', () => {
     throttledPreview(kEditor.getValue());
@@ -253,8 +236,7 @@
   });
 
   document.querySelector('#open-new-gist > span').addEventListener('click', (event) => {
-    const example = `${kId || '<gist-id>'}/${kFilename || '<filename>'}`;
-    const input = window.prompt('Input Gist ID and Filename', example);
+    const input = window.prompt('Input <gist-id>/<filename>');
     if (input) {
       const [id, filename] = input.split('/');
       const { origin, pathname } = window.location;
