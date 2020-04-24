@@ -86,11 +86,14 @@ var fetchToJson = (resp) => {
   return resp.json();
 }
 
-var gistGet = (id, token, filename) =>
+var gistGet = (id, token) =>
   fetch('https://api.github.com/gists/' + id, {
     // if public, request will succeed without token
     headers: { Authorization: token ? `token ${token}` : null }
-  }).then(fetchToJson).then((respJson) => {
+  }).then(fetchToJson);
+
+var gistGetFile = (id, token, filename) =>
+  gistGet(id, token).then((respJson) => {
     if (!(filename in respJson.files)) {
       throw `Gist not found : filename = ${filename}`;
     }
@@ -108,7 +111,7 @@ var gistUpdate = (id, token, filename, content) =>
 
 if (kId && kFilename) {
   // Load
-  gistGet(kId, kToken, kFilename).then(
+  gistGetFile(kId, kToken, kFilename).then(
     (content) => kEditor.setValue(content), window.alert);
 
   // Update on Control-s (if token is valid)
@@ -122,6 +125,9 @@ if (kId && kFilename) {
       gistUpdate(kId, kToken, kFilename, kEditor.getValue()).catch(window.alert);
     }
   });
+} else {
+  document.querySelector('#settings').hidden = false;
+  document.querySelector('#current-gist').hidden = true;
 }
 
 document.querySelector('#current-gist > span').addEventListener('click', (event) => {
@@ -130,11 +136,31 @@ document.querySelector('#current-gist > span').addEventListener('click', (event)
 });
 
 document.querySelector('#open-new-gist > span').addEventListener('click', (event) => {
-  const input = window.prompt('Input <gist-id>/<filename>');
+  const input = window.prompt('Input <gist-url> or <gist-id> or <gist-id>/<filename>');
   if (input) {
-    const [id, filename] = input.split('/');
+    var id, filename;
+    if (input.startsWith('https://gist.github.com')) {
+      const url = new URL(input);
+      id = _.last(url.pathname.split('/'));
+    } else {
+      if (input.includes('/')) {
+        [id, filename] = input.split('/');
+      } else {
+        id = input;
+      }
+    }
+
     const { origin, pathname } = window.location;
-    window.location = `${origin}${pathname}?id=${id}&filename=${filename}`;
+    if (filename) {
+      window.location = `${origin}${pathname}?id=${id}&filename=${filename}`;
+      return;
+    }
+
+    // Find "first" file of Gist
+    gistGet(id, kToken).then(respJson => {
+      filename = _.keys(respJson.files)[0];
+      window.location = `${origin}${pathname}?id=${id}&filename=${filename}`;
+    }).catch(window.alert);
   }
 });
 
