@@ -7,9 +7,6 @@ Demo
 
 https://hi-ogawa.github.io/markdown-tex/?id=250f2363b93b83aec636bba353f183d4&filename=markdown-tex-demo.txt
 
-TODO
-
-- Support more convenient macro setup
 
 ## References
 
