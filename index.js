@@ -29,50 +29,51 @@ var kCodemirrorOptions = {
   }
 };
 
-var kShowdownOptions = {
-  literalMidWordUnderscores: true, // this saves inline math with underscore
-};
-
-var kConverter = new window.showdown.Converter(kShowdownOptions);
+var kConverter = new window.showdown.Converter();
 var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 
-const kPatterns = [
-  {
-    regex: /\$\$([^\$]+?)\$\$/gm,
-    replace: (_, p1) => {
-      return `<script type="math/katex; mode=display">${p1}<\/script>`;
-    }
-  },
-  {
-    regex: /\$([^\$]+?)\$/gm,
-    replace: (_, p1) => {
-      return `<script type="math/katex; mode=inline">${p1}<\/script>`;
-    }
-  },
-  {
-    regex: /<script type="math\/katex; mode=(.*?)">((?:.|\n)*?)<\/script>/gm,
-  },
-  {
-    regex: /<script type="math\/katex; mode=global">((?:.|\n)*?)<\/script>/m,
-  },
-];
+var convert = (src) => {
+  //
+  // Strategy here is
+  //   - Extract math code and render
+  //   - Run Showdown
+  //   - Put back rendered math code
+  // so that, Showdown doesn't see TeX code or KaTeX's output at all.
+  //
 
-var wrapTex = (src) =>
-  src.replace(kPatterns[0].regex, kPatterns[0].replace)
-     .replace(kPatterns[1].regex, kPatterns[1].replace);
-
-var renderTex = (src) => {
-  const katexGlobal = _.get(src.match(kPatterns[3].regex), 1, '');
-  return src.replace(kPatterns[2].regex, (_, p1, p2) => {
-    if (!['display', 'inline'].includes(p1)) { return ''; }
-    return katex.renderToString(katexGlobal + p2, { displayMode: p1 == 'display', ...kKatexOptions });
+  // Collect $$$...$$$ as global header (e.g. for macros)
+  var global = '';
+  src = src.replace(/\$\$\$([^\$]+?)\$\$\$/gm, (_, p1) => {
+    global += p1;
+    return '';
   });
-};
+
+  // Convert $$...$$ and $...$ to temporary <escape-tex> tag with id, so that Showdown does nothing about them.
+  var outputs = [];
+  src = src.replace(/\$\$([^\$]+?)\$\$/gm, (_, p1) => {
+    const id = outputs.length;
+    outputs.push(katex.renderToString(global + p1, { displayMode: true, ...kKatexOptions }));
+    return `<escape-tex id="${id}"/>`;
+  });
+  src = src.replace(/\$([^\$]+?)\$/gm, (_, p1) => {
+    const id = outputs.length;
+    outputs.push(katex.renderToString(global + p1, { displayMode: false, ...kKatexOptions }));
+    return `<escape-tex id="${id}"/>`;
+  });
+
+  // Run Showdown (markdown -> html)
+  src = kConverter.makeHtml(src);
+
+  // Insert TeX back to html
+  src = src.replace(/<escape-tex id="(.*?)"\/>/gm, (_, p1) => {
+    return outputs[Number(p1)];
+  });
+
+  return src;
+}
 
 var preview = (src) => {
-  // NOTE: Before running Showdown, we only wrap tex code with simple script tag so that
-  //       Showdown doesn't have to see complicated katex's dom output, which seems affect performance.
-  kOutput.innerHTML = renderTex(kConverter.makeHtml(wrapTex(src)));
+  kOutput.innerHTML = convert(src);
 }
 
 var throttledPreview = _.throttle(preview, 200, { leading: false, trailing : true });
@@ -118,8 +119,11 @@ var gistUpdate = (id, token, filename, content) =>
 
 if (kId && kFilename) {
   // Load
-  gistGetFile(kId, kToken, kFilename).then(
-    (content) => kEditor.setValue(content), window.alert);
+  document.title = 'Markdown Tex (Loading...)';
+  gistGetFile(kId, kToken, kFilename).then((content) => {
+    document.title = 'Markdown Tex';
+    kEditor.setValue(content);
+  }).catch(window.alert);
 
   // Update on Control-s (if token is valid)
   document.addEventListener('keydown', (event) => {
@@ -129,7 +133,10 @@ if (kId && kFilename) {
         window.alert('Access token must be provided to save data');
         return;
       }
-      gistUpdate(kId, kToken, kFilename, kEditor.getValue()).catch(window.alert);
+      document.title = 'Markdown Tex (Saving...)';
+      gistUpdate(kId, kToken, kFilename, kEditor.getValue())
+        .then(() => { document.title = 'Markdown Tex (Saved!)' })
+        .catch(window.alert);
     }
   });
 } else {

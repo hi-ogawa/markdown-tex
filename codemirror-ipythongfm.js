@@ -3,30 +3,25 @@
 //
 
 CodeMirror.defineMode("ipythongfm", (config) => {
-  var gfm_mode = CodeMirror.getMode(config, "markdown");
-  var tex_mode = CodeMirror.getMode(config, "stex");
+  var markdown = CodeMirror.getMode(config, "markdown");
+  var stex = CodeMirror.getMode(config, "stex");
   return CodeMirror.multiplexingMode(
-      gfm_mode,
-      {
-          open: "$$", close: "$$",
-          mode: tex_mode,
-          delimStyle: "delimit"
-      },
-      {
-          open: "$", close: "$",
-          mode: tex_mode,
-          delimStyle: "delimit"
-      },
-      {
-          open: "\\(", close: "\\)",
-          mode: tex_mode,
-          delimStyle: "delimit"
-      },
-      {
-          open: "\\[", close: "\\]",
-          mode: tex_mode,
-          delimStyle: "delimit"
-      }
+    markdown,
+    {
+      open: "$$$", close: "$$$",
+      mode: stex,
+      delimStyle: "delimit"
+    },
+    {
+      open: "$$", close: "$$",
+      mode: stex,
+      delimStyle: "delimit"
+    },
+    {
+      open: "$", close: "$",
+      mode: stex,
+      delimStyle: "delimit"
+    },
   );
 });
 CodeMirror.defineMIME("text/x-ipythongfm", "ipythongfm");
