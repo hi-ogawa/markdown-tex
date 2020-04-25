@@ -66,3 +66,8 @@ html, body {
   text-decoration: underline;
   cursor: pointer;
 }
+
+#settings > ul > li[disable], #settings > ul > li[disable] > span {
+  color: #aaa;
+  cursor: initial;
+}

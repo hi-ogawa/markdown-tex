@@ -75,9 +75,26 @@ var convert = (src) => {
 
 var preview = (src) => {
   const output = convert(src);
-  kOutput.innerHTML = output;
+
+  // Create dummy element
+  const dummy = document.createElement('div');
+  dummy.innerHTML = output;
+
+  // Optimization to reduce unnecessary DOM layout (especially because katex's output is complicated.)
+  // TODO: Compute some reasonable edit distance and insert/delete when not same length
+  if (dummy.children.length == kOutput.children.length) {
+    _.zip(dummy.children, kOutput.children).map(([now, old]) => {
+      if (now.outerHTML != old.outerHTML) {
+        old.outerHTML = now.outerHTML;
+      }
+    });
+
+  // If not same length, swap whole output
+  } else {
+    kOutput.innerHTML = dummy.innerHTML;
+  }
 }
-var throttledPreview = _.throttle(preview, 300, { leading: true, trailing : true });
+var throttledPreview = _.throttle(preview, 100, { leading: true, trailing : true });
 
 kEditor.doc.on('change', () => {
   throttledPreview(kEditor.getValue());
@@ -120,8 +137,9 @@ var gistUpdate = (id, token, filename, content) =>
 
 
 if (!kId) {
-  document.querySelector('#settings').hidden = false;
-  document.querySelector('#current-gist').hidden = true;
+  document.querySelector('#settings').setAttribute('hidden', false);
+  document.querySelector('#current-gist').setAttribute('disable', true);
+  document.querySelector('#gist-files').setAttribute('disable', true);
 } else {
 
   document.title = 'Markdown Tex (Loading...)';
@@ -141,11 +159,15 @@ if (!kId) {
       kEditor.setValue(respJson.files[kFilename].content);
     }
   })
-  .catch(window.alert)
+  .catch((error) => {
+    document.querySelector('#current-gist').setAttribute('disable', true);
+    document.querySelector('#gist-files').setAttribute('disable', true);
+    window.alert(error);
+  })
   .finally(() => {
     document.title = 'Markdown Tex';
     if (kEditor.getValue().length == 0) {
-      document.querySelector('#settings').hidden = false;
+      document.querySelector('#settings').setAttribute('hidden', false);
       return;
     }
 
@@ -166,10 +188,12 @@ if (!kId) {
   });
 }
 
-document.querySelector('#current-gist > span').addEventListener('click', (event) => {
-  const url = `https://gist.github.com/${kId}`;
-  window.open(url, '_blank');
-});
+if (kId) {
+  document.querySelector('#current-gist > span').addEventListener('click', (event) => {
+    const url = `https://gist.github.com/${kId}`;
+    window.open(url, '_blank');
+  });
+}
 
 document.querySelector('#open-new-gist > span').addEventListener('click', (event) => {
   const input = window.prompt('Input <gist-url> or <gist-id> or <gist-id>/<filename>');
