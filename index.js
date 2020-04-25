@@ -31,6 +31,7 @@ var kCodemirrorOptions = {
 
 var kConverter = new window.showdown.Converter();
 var kEditor = CodeMirror(kInput, kCodemirrorOptions);
+var memoized_katex_renderToString = _.memoize(katex.renderToString, (...args) => JSON.stringify(args));
 
 var convert = (src) => {
   //
@@ -52,12 +53,12 @@ var convert = (src) => {
   var outputs = [];
   src = src.replace(/\$\$([^\$]+?)\$\$/gm, (_, p1) => {
     const id = outputs.length;
-    outputs.push(katex.renderToString(global + p1, { displayMode: true, ...kKatexOptions }));
+    outputs.push(memoized_katex_renderToString(global + p1, { displayMode: true, ...kKatexOptions }));
     return `<escape-tex id="${id}"/>`;
   });
   src = src.replace(/\$([^\$]+?)\$/gm, (_, p1) => {
     const id = outputs.length;
-    outputs.push(katex.renderToString(global + p1, { displayMode: false, ...kKatexOptions }));
+    outputs.push(memoized_katex_renderToString(global + p1, { displayMode: false, ...kKatexOptions }));
     return `<escape-tex id="${id}"/>`;
   });
 
@@ -73,10 +74,10 @@ var convert = (src) => {
 }
 
 var preview = (src) => {
-  kOutput.innerHTML = convert(src);
+  const output = convert(src);
+  kOutput.innerHTML = output;
 }
-
-var throttledPreview = _.throttle(preview, 200, { leading: false, trailing : true });
+var throttledPreview = _.throttle(preview, 300, { leading: true, trailing : true });
 
 kEditor.doc.on('change', () => {
   throttledPreview(kEditor.getValue());
