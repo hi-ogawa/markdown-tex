@@ -61,7 +61,7 @@ html, body {
   margin-bottom: 6px;
 }
 
-#settings > ul > li > span {
+#settings > ul  li > span {
   color: #44e;
   text-decoration: underline;
   cursor: pointer;

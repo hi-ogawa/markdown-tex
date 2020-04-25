@@ -118,31 +118,52 @@ var gistUpdate = (id, token, filename, content) =>
     })
   }).then(fetchToJson);
 
-if (kId && kFilename) {
-  // Load
-  document.title = 'Markdown Tex (Loading...)';
-  gistGetFile(kId, kToken, kFilename).then((content) => {
-    document.title = 'Markdown Tex';
-    kEditor.setValue(content);
-  }).catch(window.alert);
 
-  // Update on Control-s (if token is valid)
-  document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key == 's') {
-      event.preventDefault();
-      if (!kToken) {
-        window.alert('Access token must be provided to save data');
-        return;
-      }
-      document.title = 'Markdown Tex (Saving...)';
-      gistUpdate(kId, kToken, kFilename, kEditor.getValue())
-        .then(() => { document.title = 'Markdown Tex (Saved!)' })
-        .catch(window.alert);
-    }
-  });
-} else {
+if (!kId) {
   document.querySelector('#settings').hidden = false;
   document.querySelector('#current-gist').hidden = true;
+} else {
+
+  document.title = 'Markdown Tex (Loading...)';
+  gistGet(kId, kToken).then(respJson => {
+    // Create links to files
+    const ul = document.querySelector('#gist-files > ul');
+    const { origin, pathname } = window.location;
+    _.keys(respJson.files).forEach(filename => {
+      const li = document.createElement('li');
+      const url = `${origin}${pathname}?id=${kId}&filename=${filename}`;
+      li.innerHTML = `<a href="${url}">${filename}</a>`;
+      ul.appendChild(li);
+    })
+
+    // Load content
+    if (kFilename && (kFilename in respJson.files)) {
+      kEditor.setValue(respJson.files[kFilename].content);
+    }
+  })
+  .catch(window.alert)
+  .finally(() => {
+    document.title = 'Markdown Tex';
+    if (kEditor.getValue().length == 0) {
+      document.querySelector('#settings').hidden = false;
+      return;
+    }
+
+    // Update on Control-s
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.key == 's') {
+        event.preventDefault();
+        if (!kToken) {
+          window.alert('Access token must be provided to save data');
+          return;
+        }
+        document.title = 'Markdown Tex (Saving...)';
+        gistUpdate(kId, kToken, kFilename, kEditor.getValue())
+          .then(() => { document.title = 'Markdown Tex (Saved!)' })
+          .catch(window.alert);
+      }
+    });
+  });
 }
 
 document.querySelector('#current-gist > span').addEventListener('click', (event) => {
