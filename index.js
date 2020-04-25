@@ -1,5 +1,12 @@
-var kInput = document.querySelector('#input')
-var kOutput = document.querySelector('#output');
+const $   = document.querySelector.bind(document);
+const $$  = document.querySelectorAll.bind(document);
+const $c  = (selector, method, ...args) => $(selector).classList[method](...args);
+const $$c = (selector, method, ...args) => $$(selector).map(e => e.classList[method](...args));
+const $a  = (selector, method, ...args) => $(selector)[`${method}Attribute`](...args);
+const $$a = (selector, method, ...args) => $$(selector).map(e => e[`${method}Attribute`](...args));
+
+var kInput = $('#input')
+var kOutput = $('#output');
 
 var kKatexOptions = {
   output: 'html',
@@ -137,15 +144,14 @@ var gistUpdate = (id, token, filename, content) =>
 
 
 if (!kId) {
-  document.querySelector('#settings').setAttribute('hidden', false);
-  document.querySelector('#current-gist').setAttribute('disable', true);
-  document.querySelector('#gist-files').setAttribute('disable', true);
+  $('#settings').classList.remove('invisible');
 } else {
 
   document.title = 'Markdown Tex (Loading...)';
   gistGet(kId, kToken).then(respJson => {
     // Create links to files
-    const ul = document.querySelector('#gist-files > ul');
+    $('#gist-files').classList.remove('disabled');
+    const ul = $('#gist-files > ul');
     const { origin, pathname } = window.location;
     _.keys(respJson.files).forEach(filename => {
       const li = document.createElement('li');
@@ -154,20 +160,21 @@ if (!kId) {
       ul.appendChild(li);
     })
 
+    // Create links to Gist
+    $$('#gist-links a').forEach(e => e.classList.remove('disabled'));
+    $$('#gist-links a')[0].setAttribute('href', `https://gist.github.com/${respJson.owner.login}/${kId}/`);
+    $$('#gist-links a')[1].setAttribute('href', `https://gist.github.com/${respJson.owner.login}/${kId}/edit`);
+
     // Load content
     if (kFilename && (kFilename in respJson.files)) {
       kEditor.setValue(respJson.files[kFilename].content);
     }
   })
-  .catch((error) => {
-    document.querySelector('#current-gist').setAttribute('disable', true);
-    document.querySelector('#gist-files').setAttribute('disable', true);
-    window.alert(error);
-  })
+  .catch(window.alert)
   .finally(() => {
     document.title = 'Markdown Tex';
     if (kEditor.getValue().length == 0) {
-      document.querySelector('#settings').setAttribute('hidden', false);
+      $('#settings').classList.remove('invisible');
       return;
     }
 
@@ -188,14 +195,7 @@ if (!kId) {
   });
 }
 
-if (kId) {
-  document.querySelector('#current-gist > span').addEventListener('click', (event) => {
-    const url = `https://gist.github.com/${kId}`;
-    window.open(url, '_blank');
-  });
-}
-
-document.querySelector('#open-new-gist > span').addEventListener('click', (event) => {
+$('#open-new-gist > span').addEventListener('click', (event) => {
   const input = window.prompt('Input <gist-url> or <gist-id> or <gist-id>/<filename>');
   if (input) {
     var id, filename;
@@ -224,7 +224,7 @@ document.querySelector('#open-new-gist > span').addEventListener('click', (event
   }
 });
 
-document.querySelector('#setup-access-token > span').addEventListener('click', (event) => {
+$('#setup-access-token > span').addEventListener('click', (event) => {
   const token = window.prompt('Input your access token');
   if (token) {
     window.localStorage.setItem('token', token);

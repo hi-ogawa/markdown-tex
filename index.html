@@ -11,19 +11,23 @@
 <div id="root">
   <div id="input"></div>
   <div id="output" class="markdown-body"></div>
-  <div id="settings-button" onclick="var s = document.querySelector('#settings'); s.hidden = !s.hidden">
+  <div id="settings-button" onclick="$('#settings').classList.toggle('invisible')">
     <i class="material-icons">settings</i>
   </div>
-  <div id="settings" hidden>
+  <div id="settings" class="invisible">
     <div id="menu">Menu</div>
     <ul>
-      <li id="current-gist"><span>Current Gist</span></li>
+      <li id="gist-files" class="disabled">Gist Files<ul></ul></li>
+      <li id="gist-links">Link To Gist :
+        <a target='_blank' class="disabled">Show</a>
+        <a target='_blank' class="disabled">Edit</a>
+        <a target='_blank' href="https://gist.github.com/new">New</a>
+      </li>
       <li id="open-new-gist"><span>Open New Gist</span></li>
       <li id="setup-access-token">
         <span>Setup Access Token</span> or
         <a target='_blank' href="https://github.com/settings/tokens/new?scopes=gist&description=Markdown%20Tex">Create at Github</a>
       </li>
-      <li id="gist-files"> Gist Files <ul></ul> </li>
     </ul>
   </div>
 </div>

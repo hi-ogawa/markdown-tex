@@ -3,8 +3,8 @@
   margin: 0; border: 0;
 }
 
-*[hidden] {
-  display: none;
+.invisible {
+  visibility: hidden;
 }
 
 html, body {
@@ -67,7 +67,12 @@ html, body {
   cursor: pointer;
 }
 
-#settings > ul > li[disable], #settings > ul > li[disable] > span {
+#settings > ul > li.disabled, #settings > ul > li.disabled > span {
   color: #aaa;
   cursor: initial;
+}
+
+#gist-links a.disabled {
+  color: #aaa;
+  text-decoration: underline;
 }
