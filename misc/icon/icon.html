@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; border: 0;
+  overflow: visible;
+}
+html, body {
+  height: 100%;
+  font-family: KaTeX_Main;
+  overflow: hidden;
+}
+#root {
+  position: relative;
+  box-sizing: content-box;
+  top: 10px; left: 10px;
+  border: 1px solid black;
+  width: 32px; height: 32px;
+}
+#glyph {
+  position: absolute;
+  /* NOTE: Manually tweak this to center glyph */
+  left: 31%;
+  top: 27%;
+  transform: scale(2.2);
+}
+</style>
+
+<div id="root">
+  <div id="glyph">∂</div>
+</div>
