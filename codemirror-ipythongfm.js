@@ -5,23 +5,15 @@
 CodeMirror.defineMode("ipythongfm", (config) => {
   var markdown = CodeMirror.getMode(config, "markdown");
   var stex = CodeMirror.getMode(config, "stex");
-  return CodeMirror.multiplexingMode(
-    markdown,
-    {
-      open: "$$$", close: "$$$",
-      mode: stex,
-      delimStyle: "delimit"
-    },
-    {
-      open: "$$", close: "$$",
-      mode: stex,
-      delimStyle: "delimit"
-    },
-    {
-      open: "$", close: "$",
-      mode: stex,
-      delimStyle: "delimit"
-    },
-  );
+  var kDelimiters = [
+    ['$$$', '$$$'],
+    ['$$', '$$'],
+    ['$', '$'],
+    ['\\\[', '\\\]'],
+    ['\\\(', '\\\)'],
+  ];
+  var options = kDelimiters.map(
+      ([open, close]) => ({ open, close, mode: stex, delimStyle: 'delimit' }));
+  return CodeMirror.multiplexingMode(markdown, ...options);
 });
 CodeMirror.defineMIME("text/x-ipythongfm", "ipythongfm");

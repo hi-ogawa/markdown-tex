@@ -36,6 +36,12 @@ var kCodemirrorOptions = {
   }
 };
 
+var kDelimeterPatterns = {
+  global:  [/\$\$\$([^\$]+?)\$\$\$/gm],                       // $$$..$$$
+  display: [/\$\$([^\$]+?)\$\$/gm, /\\\[((?:.|\n)*?)\\\]/gm], // $$...$$, \[...\]
+  inline:  [/\$([^\$]+?)\$/gm, /\\\(((?:.|\n)*?)\\\)/gm],     // $...$, \(...\)
+}
+
 var kConverter = new window.showdown.Converter();
 var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 var memoized_katex_renderToString = _.memoize(katex.renderToString, (...args) => JSON.stringify(args));
@@ -49,24 +55,30 @@ var convert = (src) => {
   // so that, Showdown doesn't see TeX code or KaTeX's output at all.
   //
 
-  // Collect $$$...$$$ as global header (e.g. for macros)
+  // Collect global math code (useful for e.g. macros)
   var global = '';
-  src = src.replace(/\$\$\$([^\$]+?)\$\$\$/gm, (_, p1) => {
-    global += p1;
-    return '';
-  });
+  kDelimeterPatterns.global.forEach(regexp => {
+    src = src.replace(regexp, (_, p1) => {
+      global += p1;
+      return '';
+    });
+  })
 
-  // Convert $$...$$ and $...$ to temporary <escape-tex> tag with id, so that Showdown does nothing about them.
+  // Convert display/inline math code to temporary <escape-tex> tag with id, so that Showdown does nothing about them.
   var outputs = [];
-  src = src.replace(/\$\$([^\$]+?)\$\$/gm, (_, p1) => {
-    const id = outputs.length;
-    outputs.push(memoized_katex_renderToString(global + p1, { displayMode: true, ...kKatexOptions }));
-    return `<escape-tex id="${id}"/>`;
+  kDelimeterPatterns.display.forEach(regexp => {
+    src = src.replace(regexp, (_, p1) => {
+      const id = outputs.length;
+      outputs.push(memoized_katex_renderToString(global + p1, { displayMode: true, ...kKatexOptions }));
+      return `<escape-tex id="${id}"/>`;
+    });
   });
-  src = src.replace(/\$([^\$]+?)\$/gm, (_, p1) => {
-    const id = outputs.length;
-    outputs.push(memoized_katex_renderToString(global + p1, { displayMode: false, ...kKatexOptions }));
-    return `<escape-tex id="${id}"/>`;
+  kDelimeterPatterns.inline.forEach(regexp => {
+    src = src.replace(regexp, (_, p1) => {
+      const id = outputs.length;
+      outputs.push(memoized_katex_renderToString(global + p1, { displayMode: false, ...kKatexOptions }));
+      return `<escape-tex id="${id}"/>`;
+    });
   });
 
   // Run Showdown (markdown -> html)
@@ -81,14 +93,26 @@ var convert = (src) => {
 }
 
 var preview = (src) => {
+  // NOTE:
+  // - `convert`is not a bottleneck (at least, if we cache katex.renderToString.)
+  // - Parsing and Layouting Katex's DOM is very expensive for browser.
+  //   Even for simple document, it can goes e.g.
+  //     - Parse HTML        : 10ms~
+  //     - Recalculate Style : 50ms~
+  //     - Layout            : 50ms~
+  // - Currently, we check if the number of "top elements" (e.g. h1, p) have changed.
+  //   If it didn't, then we update the one changed.
+  //   This should be almost all the case for interactive use.
+  //
+
+  // Always convert whole markdown source
   const output = convert(src);
 
-  // Create dummy element
+  // Create "offscreen" element
   const dummy = document.createElement('div');
   dummy.innerHTML = output;
 
-  // Optimization to reduce unnecessary DOM layout (especially because katex's output is complicated.)
-  // TODO: Compute some reasonable edit distance and insert/delete when not same length
+  // if same length, compare each top element pair at the same index
   if (dummy.children.length == kOutput.children.length) {
     _.zip(dummy.children, kOutput.children).map(([now, old]) => {
       if (now.outerHTML != old.outerHTML) {
