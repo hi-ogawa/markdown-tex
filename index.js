@@ -1,5 +1,5 @@
 const $   = document.querySelector.bind(document);
-const $$  = document.querySelectorAll.bind(document);
+const $$  = (...args) => Array.from(document.querySelectorAll(...args));
 const $c  = (selector, method, ...args) => $(selector).classList[method](...args);
 const $$c = (selector, method, ...args) => $$(selector).map(e => e.classList[method](...args));
 const $a  = (selector, method, ...args) => $(selector)[`${method}Attribute`](...args);
@@ -168,13 +168,15 @@ var gistUpdate = (id, token, filename, content) =>
 
 
 if (!kId) {
-  $('#settings').classList.remove('invisible');
+  $c('#spinner', 'add', 'invisible');
+  $c('#settings', 'remove', 'invisible');
 } else {
 
-  document.title = 'Markdown Tex (Loading...)';
   gistGet(kId, kToken).then(respJson => {
+    $c('#gist-files', 'remove', 'disabled');
+    $$c('#gist-links a', 'remove', 'disabled');
+
     // Create links to files
-    $('#gist-files').classList.remove('disabled');
     const ul = $('#gist-files > ul');
     const { origin, pathname } = window.location;
     _.keys(respJson.files).forEach(filename => {
@@ -185,9 +187,8 @@ if (!kId) {
     })
 
     // Create links to Gist
-    $$('#gist-links a').forEach(e => e.classList.remove('disabled'));
-    $$('#gist-links a')[0].setAttribute('href', `https://gist.github.com/${respJson.owner.login}/${kId}/`);
-    $$('#gist-links a')[1].setAttribute('href', `https://gist.github.com/${respJson.owner.login}/${kId}/edit`);
+    $a('#gist-links a:nth-of-type(2)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/`);
+    $a('#gist-links a:nth-of-type(3)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/edit`);
 
     // Load content
     if (kFilename && (kFilename in respJson.files)) {
@@ -196,9 +197,9 @@ if (!kId) {
   })
   .catch(window.alert)
   .finally(() => {
-    document.title = 'Markdown Tex';
+    $c('#spinner', 'add', 'invisible');
     if (kEditor.getValue().length == 0) {
-      $('#settings').classList.remove('invisible');
+      $c('#settings', 'remove', 'invisible');
       return;
     }
 
@@ -210,10 +211,11 @@ if (!kId) {
           window.alert('Access token must be provided to save data');
           return;
         }
-        document.title = 'Markdown Tex (Saving...)';
+
+        $c('#spinner', 'remove', 'invisible');
         gistUpdate(kId, kToken, kFilename, kEditor.getValue())
-          .then(() => { document.title = 'Markdown Tex (Saved!)' })
-          .catch(window.alert);
+          .catch(window.alert)
+          .finally(() => $c('#spinner', 'add', 'invisible'));
       }
     });
   });

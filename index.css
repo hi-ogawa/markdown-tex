@@ -76,3 +76,27 @@ html, body {
   color: #aaa;
   text-decoration: underline;
 }
+
+#spinner {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#spinner::after {
+  content: '';
+  position: absolute;
+  height: 50px; width: 50px;
+  border-radius: 50%;
+  border: 2px solid #aaa;
+  border-right-color: #ddd;
+  animation: spinner_keyframes 0.8s linear infinite;
+}
+
+@keyframes spinner_keyframes {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}

@@ -11,9 +11,10 @@
 <div id="root">
   <div id="input"></div>
   <div id="output" class="markdown-body"></div>
-  <div id="settings-button" onclick="$('#settings').classList.toggle('invisible')">
+  <div id="settings-button" onclick="$c('#settings', 'toggle', 'invisible')">
     <i class="material-icons">settings</i>
   </div>
+  <div id="spinner"></div>
   <div id="settings" class="invisible">
     <div id="menu">Menu</div>
     <ul>
@@ -42,7 +43,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
 
 <!-- lib: codemirror -->
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/lib/codemirror.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/addon/mode/multiplex.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/addon/comment/comment.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.2/mode/markdown/markdown.js"></script>
