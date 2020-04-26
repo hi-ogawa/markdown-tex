@@ -187,8 +187,8 @@ if (!kId) {
     })
 
     // Create links to Gist
-    $a('#gist-links a:nth-of-type(2)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/`);
-    $a('#gist-links a:nth-of-type(3)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/edit`);
+    $a('#gist-links a:nth-of-type(1)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/`);
+    $a('#gist-links a:nth-of-type(2)', 'set', 'href', `https://gist.github.com/${respJson.owner.login}/${kId}/edit`);
 
     // Load content
     if (kFilename && (kFilename in respJson.files)) {
