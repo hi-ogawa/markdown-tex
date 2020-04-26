@@ -32,6 +32,7 @@ html, body {
   flex: 1 0 50%;
   overflow-y: auto;
   padding: 10px;
+  padding-bottom: 200px; /* Allocate bottom space to write to the end without scrolling.*/
 }
 
 #settings-button {
