@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script>
 <style>
 *, *::before, *::after {
   box-sizing: border-box;
@@ -8,7 +10,6 @@
 }
 html, body {
   height: 100%;
-  font-family: KaTeX_Main;
   overflow: hidden;
 }
 #root {
@@ -20,13 +21,25 @@ html, body {
 }
 #glyph {
   position: absolute;
-  /* NOTE: Manually tweak this to center glyph */
-  left: 31%;
-  top: 27%;
-  transform: scale(2.2);
+  /* NOTE: Manually tweak these to centerize glyph */
+
+  /* \partial */
+  /* left: 31%;
+  top: 22%;
+  transform: scale(1.8); */
+
+  /* \partial_\mu */
+  left: 23%;
+  top: 8%;
+  transform: scale(1.6);
 }
 </style>
 
 <div id="root">
-  <div id="glyph">∂</div>
+  <!-- <div id="glyph">\(\partial\)</div> -->
+  <div id="glyph">\(\partial_\mu\)</div>
 </div>
+
+<script>
+  renderMathInElement(document.body);
+</script>
