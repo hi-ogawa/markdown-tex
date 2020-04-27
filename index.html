@@ -11,6 +11,9 @@
 
 <div id="root">
   <div id="input"></div>
+  <div id="separator" draggable="true"
+      ondragstart="event.dataTransfer.setDragImage(document.createElement('span'), 0, 0);"
+      ondrag="if (event.clientX > 0) { $('#input').style.width = `${100 * event.clientX / window.innerWidth}%`; }"></div>
   <div id="output" class="markdown-body"></div>
   <div id="settings-button" onclick="$c('#settings', 'toggle', 'invisible')">
     <i class="material-icons">settings</i>
