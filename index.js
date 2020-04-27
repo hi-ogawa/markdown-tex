@@ -36,13 +36,17 @@ var kCodemirrorOptions = {
   }
 };
 
+var kShowdownOptions = {
+  tables: true,
+}
+
 var kDelimeterPatterns = {
   global:  [/\$\$\$([^\$]+?)\$\$\$/gm],                       // $$$..$$$
   display: [/\$\$([^\$]+?)\$\$/gm, /\\\[((?:.|\n)*?)\\\]/gm], // $$...$$, \[...\]
   inline:  [/\$([^\$]+?)\$/gm, /\\\(((?:.|\n)*?)\\\)/gm],     // $...$, \(...\)
 }
 
-var kConverter = new window.showdown.Converter();
+var kConverter = new window.showdown.Converter(kShowdownOptions);
 var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 var memoized_katex_renderToString = _.memoize(katex.renderToString, (...args) => JSON.stringify(args));
 
