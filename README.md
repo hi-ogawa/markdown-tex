@@ -1,9 +1,10 @@
-## Markdown-Tex
+## Markdown TeX
 
-This is a simple demo of markdown editor with TeX integration.
-Gist is used as a text data backend, accessed via user-provided Github API token.
+Live-preview Markdown editor with TeX integration.
+[Gist](https://gist.github.com/) is used as a text data backend, accessed via user-provided Github API token.
 
-Demo
+
+Example
 
 https://hi-ogawa.github.io/markdown-tex/?id=250f2363b93b83aec636bba353f183d4&filename=markdown-tex-demo.txt
 
