@@ -51,14 +51,6 @@ var kEditor = CodeMirror(kInput, kCodemirrorOptions);
 var memoized_katex_renderToString = _.memoize(katex.renderToString, (...args) => JSON.stringify(args));
 
 var convert = (src) => {
-  //
-  // Strategy here is
-  //   - Extract math code and render
-  //   - Run Showdown
-  //   - Put back rendered math code
-  // so that, Showdown doesn't see TeX code or KaTeX's output at all.
-  //
-
   // Collect global math code (useful for e.g. macros)
   var global = '';
   kDelimeterPatterns.global.forEach(regexp => {
@@ -98,15 +90,14 @@ var convert = (src) => {
 
 var preview = (src) => {
   // NOTE:
-  // - `convert`is not a bottleneck (at least, if we cache katex.renderToString.)
-  // - Parsing and Layouting Katex's DOM is very expensive for browser.
+  // - `convert` doesn't seem a bottleneck (at least, if we cache katex.renderToString.)
+  // - Parsing and layouting Katex's DOM is very expensive for browser.
   //   Even for simple document, it can goes e.g.
   //     - Parse HTML        : 10ms~
   //     - Recalculate Style : 50ms~
   //     - Layout            : 50ms~
-  // - Currently, we check if the number of "top elements" (e.g. h1, p) have changed.
-  //   If it didn't, then we update the one changed.
-  //   This should be almost all the case for interactive use.
+  // - So, currently, we modify whole DOM tree along Levenshtein's edit distance.
+  // - Now, "Parse HTML" at `dummy.innerHTML = output` becamse a bottleneck,
   //
 
   // Always convert whole markdown source
@@ -116,19 +107,52 @@ var preview = (src) => {
   const dummy = document.createElement('div');
   dummy.innerHTML = output;
 
-  // if same length, compare each top element pair at the same index
-  if (dummy.children.length == kOutput.children.length) {
-    _.zip(dummy.children, kOutput.children).map(([now, old]) => {
-      if (now.outerHTML != old.outerHTML) {
-        old.outerHTML = now.outerHTML;
-      }
-    });
+  var ls_src = Array.from(dummy.children).map(e => e.outerHTML);
+  var ls_tgt = Array.from(kOutput.children).map(e => e.outerHTML);
+  var ls_tgt_dom = kOutput.children;
 
-  // If not same length, swap whole output
-  } else {
-    kOutput.innerHTML = dummy.innerHTML;
+  // If same length, modify based on pairs at the same position
+  if (ls_src.length == ls_tgt.length) {
+    for (var i = 0; i < ls_src.length; i++) {
+      if (ls_src[i] !== ls_tgt[i]) {
+        console.log(i);
+        ls_tgt_dom[i].outerHTML = ls_src[i];
+      }
+    }
+    return;
   }
+
+  // Compute edit distance
+  var [_table, path] = solveLevenshteinDistance(ls_src, ls_tgt);
+  var to_be_removed = [];
+
+  // Collect to-be-removed and execute replace
+  path.forEach(([command, i, j]) => {
+    if (command == 'remove') {
+      to_be_removed.push(ls_tgt_dom[j]);
+    }
+    if (command == 'replace') {
+      ls_tgt_dom[j].outerHTML = ls_src[i];
+    }
+  });
+
+  // Insert from back so that index `j` is valid during modification
+  Array.from(path).reverse().forEach(([command, i, j]) => {
+    if (command == 'insert') {
+      var tmp = document.createElement('div');
+      if (j == -1) {
+        kOutput.prepend(tmp);
+      } else {
+        kOutput.insertBefore(tmp, ls_tgt_dom[j + 1]);
+      }
+      tmp.outerHTML = ls_src[i]; // outerHTML is available only for dom with parent.
+    }
+  });
+
+  // Execute remove
+  to_be_removed.forEach(e => e.remove());
 }
+
 var throttledPreview = _.throttle(preview, 100, { leading: true, trailing : true });
 
 kEditor.doc.on('change', () => {
