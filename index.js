@@ -115,7 +115,6 @@ var preview = (src) => {
   if (ls_src.length == ls_tgt.length) {
     for (var i = 0; i < ls_src.length; i++) {
       if (ls_src[i] !== ls_tgt[i]) {
-        console.log(i);
         ls_tgt_dom[i].outerHTML = ls_src[i];
       }
     }
@@ -153,7 +152,7 @@ var preview = (src) => {
   to_be_removed.forEach(e => e.remove());
 }
 
-var throttledPreview = _.throttle(preview, 100, { leading: true, trailing : true });
+var throttledPreview = _.throttle(preview, 200, { leading: false, trailing : true });
 
 kEditor.doc.on('change', () => {
   throttledPreview(kEditor.getValue());
